@@ -59,7 +59,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LogError'
       x-amazon-apigateway-integration:
-          uri: arn:aws:apigateway:ca-central-1:logs:action/PutLogEvents
+          uri: !Sub arn:aws:apigateway:${AWS::Region}:logs:action/PutLogEvents
           passthroughBehavior: when_no_match
           httpMethod: POST
           credentials: arn:aws:iam::761944119947:role/api_gateway_cloudwatch_global
@@ -83,56 +83,3 @@ paths:
                 "logGroupName":  "/aws/ui/log-error",
                 "logStreamName": "sample"
             }'
-    options:
-      tags:
-        - Options
-      security: [ ]   # No security
-      responses:
-        '200':
-          description: Empty options
-          headers:
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Credentials:
-              schema:
-                type: string
-            Cache-Control:
-              schema:
-                type: string
-                default: "no-cache,no-store,max-age=0,s-maxage=0,must-revalidate"
-      x-amazon-apigateway-integration:
-        credentials: !GetAtt ApiRole.Arn
-        uri: !Sub arn:aws:apigateway:${AWS::Region}:logs:action/PutLogEvents
-        httpMethod: POST
-        responses:
-          default:
-            statusCode: 200
-            responseTemplates:
-              application/json: |
-                {
-                  "message": "success"
-                }
-        requestParameters:
-          integration.request.header.Content-Type: "'application/x-amz-json-1.1'"
-          integration.request.header.X-Amz-Target: "'Logs_20140328.PutLogEvents'"
-        requestTemplates:
-          application/json: !Sub |
-            {
-              "logEvents": [
-                .{
-                   "message": $input.json('$.message'),
-                   "timestamp": $input.json('$.timestamp')
-                 }
-               ],
-               "logGroupName": "${LogGroup}",
-               "logStreamName": "${LogStream}"
-            }
-        passthroughBehavior: when_no_templates
-        type: aws
