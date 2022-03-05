@@ -1,0 +1,17 @@
+openapi = "3.0.1"
+info = {
+  title   = "log_error_api"
+  version = "1.0"
+}
+paths = {
+  "/logerror" = {
+    post = {
+      x-amazon-apigateway-integration = {
+        httpMethod           = "POST"
+        payloadFormatVersion = "1.0"
+        type                 = "AWS"
+        uri                  = "https://qlavo92iph.execute-api.ap-southeast-1.amazonaws.com/loc-pm"
+      }
+    }
+  }
+}
