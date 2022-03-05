@@ -3,29 +3,7 @@ info:
   title: IFC Call Quality API
   description: REST API for IFC Call Quality Project
   version: 1.0.0
-servers:
-  - url: https://jnvndc9s5l-vpce-0128b8cb177b44544.execute-api.ca-central-1.amazonaws.com/dev
-    description: DEV server
-  - url: https://jvhxjw6sjh-vpce-0128b8cb177b44544.execute-api.ca-central-1.amazonaws.com/intg
-    description: INTG server
-  - url: https://xevlow1seb-vpce-0128b8cb177b44544.execute-api.ca-central-1.amazonaws.com/uat
-    description: UAT server
-  - url: https://42lij0eng2-vpce-05f63fb27d1912426.execute-api.ca-central-1.amazonaws.com/prod
-    description: Production server
 components:
-  securitySchemes:
-    bearerAuth:
-      type: apiKey
-      description: Bearer token containing JWT to be passed in http header
-      name: Authorization
-      in: header
-      x-amazon-apigateway-authtype: custom
-      x-amazon-apigateway-authorizer:
-        type: request
-        identitySource: method.request.header.Cookie
-        authorizerCredentials: ${apigateway_role}
-        authorizerUri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${authorizer_arn}/invocations
-        authorizerResultTtlInSeconds: ${authorizer_ttl}
   schemas:
     LogError:
       type: object
@@ -130,40 +108,31 @@ paths:
                 type: string
                 default: "no-cache,no-store,max-age=0,s-maxage=0,must-revalidate"
       x-amazon-apigateway-integration:
+        credentials: !GetAtt ApiRole.Arn
+        uri: !Sub arn:aws:apigateway:${AWS::Region}:logs:action/PutLogEvents
+        httpMethod: POST
         responses:
           default:
             statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,Identity,X-Api-Key'''
-              method.response.header.Access-Control-Allow-Methods: '''*'''
-              method.response.header.Access-Control-Allow-Origin: '''${origin_domain}'''
-              method.response.header.Access-Control-Allow-Credentials: '''true'''
-              method.response.header.Cache-Control: '''no-cache,no-store,max-age=0,s-maxage=0,must-revalidate'''
             responseTemplates:
               application/json: |
-                {}
+                {
+                  "message": "success"
+                }
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-amz-json-1.1'"
+          integration.request.header.X-Amz-Target: "'Logs_20140328.PutLogEvents'"
         requestTemplates:
-          application/json: "{\"statusCode\": 200}"
-        passthroughBehavior: when_no_match
-        type: mock
-x-amazon-apigateway-request-validators:
-  all:
-    validateRequestBody: true
-    validateRequestParameters: true
-  params-only:
-    validateRequestBody: false
-    validateRequestParameters: true
-x-amazon-apigateway-request-validator: all
-x-amazon-apigateway-gateway-responses:
-  DEFAULT_4XX:
-    responseParameters:
-      gatewayresponse.header.Access-Control-Allow-Origin: '''${origin_domain}'''
-      gatewayresponse.header.Access-Control-Allow-Credentials: '''true'''
-    responseTemplates:
-      application/json: '{"message":$context.error.messageString}'
-  DEFAULT_5XX:
-    responseParameters:
-      gatewayresponse.header.Access-Control-Allow-Origin: '''${origin_domain}'''
-      gatewayresponse.header.Access-Control-Allow-Credentials: '''true'''
-    responseTemplates:
-      application/json: '{"message":$context.error.messageString}'
+          application/json: !Sub |
+            {
+              "logEvents": [
+                .{
+                   "message": $input.json('$.message'),
+                   "timestamp": $input.json('$.timestamp')
+                 }
+               ],
+               "logGroupName": "${LogGroup}",
+               "logStreamName": "${LogStream}"
+            }
+        passthroughBehavior: when_no_templates
+        type: aws
