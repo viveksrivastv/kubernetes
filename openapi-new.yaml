@@ -80,8 +80,8 @@ paths:
                       "timestamp": $input.json("$.timestamp")
                     }
                 ],
-                "logGroupName":  "${log_group}",
-                "logStreamName": "${log_stream}"
+                "logGroupName":  "/aws/ui/log-error",
+                "logStreamName": "sample"
             }'
     options:
       tags:
